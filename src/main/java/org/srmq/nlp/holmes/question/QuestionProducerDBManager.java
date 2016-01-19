@@ -44,10 +44,19 @@ public class QuestionProducerDBManager {
 		public void setWordIds(int[] wordIds) {
 			this.wordIds = wordIds;
 		}
+		public String toString() {
+			StringBuffer stb = new StringBuffer(words[0].length() + words[1].length() + words[2].length() + 2);
+			stb.append(words[0]);
+			stb.append(' ');
+			stb.append(words[1]);
+			stb.append(' ');
+			stb.append(words[2]);
+			return stb.toString();
+		}
 	}
 	
 	
-	public static final String dbFile = "trigramDB/trigramDB";
+	public static final String dbFile = "/dev/shm/trigramDB/trigramDB";
 	private boolean isClosed = false;
 	private int maxLastTrigramId;
 	private final Random rnd;

@@ -1,6 +1,8 @@
 package org.srmq.nlp.holmes.question;
 
+import java.util.Collections;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.Executors;
 
@@ -35,7 +37,7 @@ public class QuestionProducerService implements Runnable{
 	
 	private int numThreads;
 	
-	static final String SENTENCE_INDEX = "Holmes-sentence-index";
+	static final String SENTENCE_INDEX = "/dev/shm/Holmes-sentence-index";
 	
 	
 	public QuestionProducerService(int numThreads, int maxQuestions) throws Exception{
@@ -44,7 +46,7 @@ public class QuestionProducerService implements Runnable{
 		pool = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(numThreads));
 		this.minQuestionThreshold = DEFAULT_MAXQUESTIONS /10;
 		this.questions = new QuestionQueue();
-		this.taskSet = new ConcurrentSkipListSet<ListenableFuture<?>>();
+		this.taskSet = Collections.newSetFromMap(new ConcurrentHashMap<ListenableFuture<?>, Boolean>());
 		this.manager = new QuestionProducerDBManager();
 		this.sentenceIndex = new SentencesLuceneIndex(SENTENCE_INDEX, true);
 	}
@@ -82,5 +84,12 @@ public class QuestionProducerService implements Runnable{
 		}
 		
 	}
-
+public static void main(String[] args) throws Exception {
+	QuestionProducerService service = new QuestionProducerService();
+	Thread t = new Thread(service);
+	t.start();
+	for(;;) {
+		Thread.sleep(1000);
+	}
+}
 }
