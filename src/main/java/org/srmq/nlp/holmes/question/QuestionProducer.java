@@ -25,14 +25,21 @@ public class QuestionProducer implements Runnable {
 	private static final int MAX_DOCS = 1024;
 	private static final int N_COMPLETIONS = 30;
 	private final Random rnd;
-
+	private QuestionProducedCallback callback;
+	
 	public QuestionProducer(int numMaxQuestions, QuestionQueue questions, QuestionProducerDBManager manager,
-			SentencesLuceneIndex sentenceIndex) {
+			SentencesLuceneIndex sentenceIndex, QuestionProducedCallback callback) {
 		this.numMaxQuestions = numMaxQuestions;
 		this.questions = questions;
 		this.manager = manager;
 		this.sentenceIndex = sentenceIndex;
 		this.rnd = new Random();
+		this.callback = callback;
+	}
+
+	public QuestionProducer(int numMaxQuestions, QuestionQueue questions, QuestionProducerDBManager manager,
+			SentencesLuceneIndex sentenceIndex) {
+		this(numMaxQuestions, questions, manager, sentenceIndex, null);
 	}
 
 	private List<String> sentencesWithTrigram(String[] trigram, int maxDocs) throws IOException, ParseException {
@@ -128,12 +135,14 @@ public class QuestionProducer implements Runnable {
 				SentenceCompletionQuestions.Question q = new SentenceCompletionQuestions.Question(tokensBefore,
 						tokensAfter, options, correctIndex);
 				this.questions.add(q);
-				log.info("Current number of questions: " + this.questions.size());
+				if (this.callback != null) {
+					this.callback.questionProduced();
+				}
+				//log.info("Current number of questions: " + this.questions.size());
 			} catch (Exception e) {
 				log.error("QuestionProducer throwed Exception", e);
 			}
 		}
-		log.info("Current number of questions: " + this.questions.size());
 	}
 
 	public static void main(String[] args) throws Exception {
@@ -143,7 +152,7 @@ public class QuestionProducer implements Runnable {
 		SentencesLuceneIndex sentenceIndex = new SentencesLuceneIndex(QuestionProducerService.SENTENCE_INDEX, true);
 		QuestionProducer producer = new QuestionProducer(numMaxQuestions, questions, manager, sentenceIndex);
 		Thread t = new Thread(producer);
-		producer.run();
+		t.start();
 	}
 
 }
